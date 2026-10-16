@@ -109,9 +109,11 @@
     <div class="container" style="max-width: 940px;">
       <a class="navbar-brand" href="#"><i class="fa-solid fa-brain"></i>Visual Risk and AI Intelligence</a>
       <ul class="navbar-nav ms-auto flex-row gap-3">
-        <li class="nav-item"><a class="nav-link" href="login.html"><i class="fa-solid fa-right-to-bracket"></i> Login</a></li>
-        <li class="nav-item"><a class="nav-link" href="register.html"><i class="fa-solid fa-user-plus"></i> Register</a></li>
-        <li class="nav-item"><a class="nav-link" href="index.html"><i class="fa-solid fa-house"></i> Home</a></li>
+
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}"><i class="fa-solid fa-right-to-bracket"></i> Login</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}"><i class="fa-solid fa-user-plus"></i> Register</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}"><i class="fa-solid fa-house"></i> Home</a></li>
+
       </ul>
     </div>
   </nav>
