@@ -1,0 +1,907 @@
+
+{% extends "base.html" %}
+
+{% block title %}Study Plan | Visual Risk and AI Intelligence{% endblock %}
+
+{% block content %}
+
+<style>
+/* ===== STUDY PLAN PAGE ===== */
+
+.study-page {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 10px 4px 35px;
+    color: var(--text, #263650);
+}
+
+.study-page * {
+    box-sizing: border-box;
+}
+
+.study-page .study-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0 0 22px;
+}
+
+.study-page .study-heading h1 {
+    font-size: 30px;
+    font-weight: 800;
+    margin: 0 0 7px;
+}
+
+.study-page .subtitle {
+    margin: 0;
+    color: var(--muted, #718096);
+    font-size: 14px;
+}
+
+.study-page .updated {
+    font-size: 12px;
+    color: var(--muted, #718096);
+    background: var(--surface, #fff);
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+/* Summary cards */
+
+.study-page .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.study-page .stat-card {
+    padding: 21px;
+    border-radius: 14px;
+    color: white;
+    min-height: 120px;
+    box-shadow: 0 5px 14px rgba(30, 50, 90, .10);
+}
+
+.study-page .stat-card:nth-child(1) {
+    background: linear-gradient(120deg, #42b983, #239b72);
+}
+
+.study-page .stat-card:nth-child(2) {
+    background: linear-gradient(120deg, #ff777e, #ed414b);
+}
+
+.study-page .stat-card:nth-child(3) {
+    background: linear-gradient(120deg, #419be8, #286bb5);
+}
+
+.study-page .stat-card:nth-child(4) {
+    background: linear-gradient(120deg, #e95ca7, #c83386);
+}
+
+.study-page .stat-label {
+    font-size: 14px;
+    opacity: .95;
+    margin-bottom: 12px;
+}
+
+.study-page .stat-number {
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.study-page .stat-description {
+    font-size: 12px;
+    margin-top: 9px;
+    opacity: .9;
+}
+
+/* Main two-column layout */
+
+.study-page .study-layout {
+    display: grid;
+    grid-template-columns: minmax(290px, 0.85fr) minmax(0, 2fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.study-page .study-panel {
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #e1e7f0);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: var(--shadow, 0 4px 14px rgba(30,50,90,.08));
+    margin-bottom: 18px;
+}
+
+.study-page .panel-title {
+    padding: 17px 20px;
+    font-size: 15px;
+    font-weight: 800;
+    border-bottom: 1px solid var(--border, #e1e7f0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.study-page .panel-body {
+    padding: 20px;
+}
+
+/* Form */
+
+.study-page .study-form label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 7px;
+}
+
+.study-page .study-form input,
+.study-page .study-form select,
+.study-page .study-form textarea {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 11px 12px;
+    margin: 0 0 16px;
+    font: inherit;
+    font-size: 14px;
+    border: 1px solid var(--border, #dce3ed);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+    color: var(--text, #263650);
+    outline: none;
+}
+
+.study-page .study-form input:focus,
+.study-page .study-form select:focus,
+.study-page .study-form textarea:focus {
+    border-color: #7665d8;
+    box-shadow: 0 0 0 3px rgba(118,101,216,.12);
+}
+
+.study-page .study-form textarea {
+    min-height: 85px;
+    resize: vertical;
+}
+
+.study-page .form-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.study-page .btn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    padding: 11px 16px;
+    border: none;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .2s, transform .2s;
+}
+
+.study-page .btn:hover {
+    opacity: .9;
+    transform: translateY(-1px);
+}
+
+.study-page .btn-primary {
+    background: linear-gradient(100deg, #6874df, #7845a6);
+    color: white;
+}
+
+.study-page .btn-secondary {
+    background: var(--hover, #f0efff);
+    color: var(--text, #263650);
+    border: 1px solid var(--border, #e1e7f0);
+}
+
+.study-page .btn-danger {
+    background: #fff0f0;
+    color: #d73545;
+    border: 1px solid #f3d0d4;
+}
+
+.study-page .form-buttons .btn-primary {
+    flex: 1;
+}
+
+/* Progress */
+
+.study-page .progress-content {
+    padding: 22px;
+}
+
+.study-page .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.study-page .progress-track {
+    height: 12px;
+    background: var(--hover, #ececf6);
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 14px 0;
+}
+
+.study-page .progress-fill {
+    width: 0;
+    height: 100%;
+    border-radius: 20px;
+    background: linear-gradient(90deg, #6874df, #43b581);
+    transition: width .25s ease;
+}
+
+.study-page .muted-text {
+    color: var(--muted, #718096);
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+/* Task search and table */
+
+.study-page .task-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--border, #e1e7f0);
+}
+
+.study-page .task-toolbar input,
+.study-page .task-toolbar select {
+    min-width: 130px;
+    flex: 1;
+    padding: 10px 11px;
+    border: 1px solid var(--border, #e1e7f0);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+    color: var(--text, #263650);
+    font-size: 13px;
+}
+
+.study-page .table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.study-page .study-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+}
+
+.study-page .study-table th {
+    font-size: 11px;
+    letter-spacing: .35px;
+    color: var(--muted, #718096);
+    text-align: left;
+    padding: 14px 12px;
+    background: var(--surface, #fff);
+    border-bottom: 1px solid var(--border, #e1e7f0);
+    white-space: nowrap;
+}
+
+.study-page .study-table td {
+    font-size: 13px;
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border, #e1e7f0);
+    vertical-align: middle;
+}
+
+.study-page .study-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.study-page .task-name {
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.study-page .task-description {
+    color: var(--muted, #718096);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.study-page .completed-row .task-name {
+    text-decoration: line-through;
+    opacity: .7;
+}
+
+.study-page .priority {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.study-page .priority-high {
+    color: #dc3545;
+    background: rgba(220,53,69,.12);
+}
+
+.study-page .priority-medium {
+    color: #ad7600;
+    background: rgba(245,158,11,.15);
+}
+
+.study-page .priority-low {
+    color: #16865c;
+    background: rgba(22,163,107,.12);
+}
+
+.study-page .status {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.study-page .status-complete {
+    color: #159568;
+}
+
+.study-page .status-pending {
+    color: #d18b17;
+}
+
+.study-page .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.study-page .small-btn {
+    padding: 7px 9px;
+    border: 1px solid var(--border, #e1e7f0);
+    border-radius: 7px;
+    background: var(--surface, #fff);
+    color: var(--text, #263650);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.study-page .small-btn.delete {
+    color: #dc3545;
+}
+
+.study-page .empty-state {
+    padding: 35px 15px !important;
+    text-align: center;
+    color: var(--muted, #718096);
+    line-height: 1.7;
+}
+
+/* Study tip */
+
+.study-page .tip-body {
+    padding: 20px;
+    color: var(--muted, #718096);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+/* Responsive */
+
+@media (max-width: 1050px) {
+    .study-page .study-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .study-page .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .study-page .study-heading h1 {
+        font-size: 24px;
+    }
+
+    .study-page .stats-grid {
+        gap: 9px;
+    }
+
+    .study-page .stat-card {
+        padding: 14px;
+        min-height: 105px;
+    }
+
+    .study-page .stat-number {
+        font-size: 25px;
+    }
+
+    .study-page .panel-body {
+        padding: 15px;
+    }
+
+    .study-page .form-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+
+<div class="study-page">
+
+    <div class="study-heading">
+        <div>
+            <h1>📚 Study Plan</h1>
+            <p class="subtitle">
+                Organize your subjects, plan your tasks, and track your progress.
+            </p>
+        </div>
+        <span class="updated" id="studyUpdated">Your study planner</span>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <section class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Tasks</div>
+            <div class="stat-number" id="totalTasks">0</div>
+            <div class="stat-description">All study plans</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Completed</div>
+            <div class="stat-number" id="completedTasks">0</div>
+            <div class="stat-description">Tasks finished</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Pending</div>
+            <div class="stat-number" id="pendingTasks">0</div>
+            <div class="stat-description">Tasks to complete</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Planned Hours</div>
+            <div class="stat-number" id="plannedHours">0</div>
+            <div class="stat-description">Total study time</div>
+        </div>
+    </section>
+
+    <section class="study-layout">
+
+        <!-- LEFT COLUMN -->
+        <div>
+            <div class="study-panel">
+                <div class="panel-title">＋ Add Study Plan</div>
+
+                <div class="panel-body">
+                    <form class="study-form" id="studyForm">
+
+                        <label for="studyDate">Study Date</label>
+                        <input type="date" id="studyDate" required>
+
+                        <label for="studySubject">Subject</label>
+                        <input type="text" id="studySubject"
+                               placeholder="e.g. Machine Learning"
+                               maxlength="100" required>
+
+                        <label for="studyTask">Task / Topic</label>
+                        <input type="text" id="studyTask"
+                               placeholder="e.g. Revise decision trees"
+                               maxlength="200" required>
+
+                        <label for="studyHours">Planned Hours</label>
+                        <input type="number" id="studyHours"
+                               min="0.25" max="24" step="0.25"
+                               placeholder="e.g. 2" required>
+
+                        <label for="studyPriority">Priority</label>
+                        <select id="studyPriority">
+                            <option value="High">High</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+
+                        <label for="studyNotes">Notes (optional)</label>
+                        <textarea id="studyNotes"
+                                  placeholder="Add a reminder or extra details"
+                                  maxlength="1000"></textarea>
+
+                        <div class="form-buttons">
+                            <button class="btn btn-primary" type="submit">
+                                ＋ Add Study Plan
+                            </button>
+                            <button class="btn btn-secondary" type="reset">
+                                Clear
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+            <div class="study-panel">
+                <div class="panel-title">📈 Study Progress</div>
+
+                <div class="progress-content">
+                    <div class="progress-labels">
+                        <span>Completion rate</span>
+                        <strong id="completionRate">0%</strong>
+                    </div>
+
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+
+                    <p class="muted-text" id="progressMessage">
+                        Add your first study task to start tracking your progress.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div>
+            <div class="study-panel">
+                <div class="panel-title">
+                    <span>☷ My Study Tasks</span>
+                    <span id="taskCountBadge">0 tasks</span>
+                </div>
+
+                <div class="task-toolbar">
+                    <input type="search" id="studySearch"
+                           placeholder="Search subjects or tasks..."
+                           aria-label="Search study tasks">
+
+                    <select id="studyFilter" aria-label="Filter study tasks">
+                        <option value="all">All tasks</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                        <option value="High">High priority</option>
+                        <option value="Medium">Medium priority</option>
+                        <option value="Low">Low priority</option>
+                    </select>
+
+                    <button class="btn btn-danger" type="button"
+                            id="clearAllTasks">
+                        Clear All
+                    </button>
+                </div>
+
+                <div class="table-scroll">
+                    <table class="study-table">
+                        <thead>
+                            <tr>
+                                <th>DATE</th>
+                                <th>SUBJECT / TASK</th>
+                                <th>HOURS</th>
+                                <th>PRIORITY</th>
+                                <th>STATUS</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studyTableBody">
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    No study plans yet. Add your first task!
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="study-panel">
+                <div class="panel-title">💡 Study Tip</div>
+                <div class="tip-body">
+                    Break large topics into smaller tasks, set realistic study
+                    hours, and mark each task complete when you finish it.
+                    Review your pending tasks daily to stay on track.
+                </div>
+            </div>
+        </div>
+
+    </section>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    const STORAGE_KEY = "visualRiskStudyPlans";
+
+    const form = document.getElementById("studyForm");
+    const dateInput = document.getElementById("studyDate");
+    const subjectInput = document.getElementById("studySubject");
+    const taskInput = document.getElementById("studyTask");
+    const hoursInput = document.getElementById("studyHours");
+    const priorityInput = document.getElementById("studyPriority");
+    const notesInput = document.getElementById("studyNotes");
+    const searchInput = document.getElementById("studySearch");
+    const filterInput = document.getElementById("studyFilter");
+    const tableBody = document.getElementById("studyTableBody");
+
+    let tasks = [];
+
+    function getLocalDate() {
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return year + "-" + month + "-" + day;
+    }
+
+    function loadTasks() {
+        try {
+            const saved = JSON.parse(
+                localStorage.getItem(STORAGE_KEY) || "[]"
+            );
+            tasks = Array.isArray(saved) ? saved : [];
+        } catch (error) {
+            tasks = [];
+            console.error("Unable to load study plans:", error);
+        }
+    }
+
+    function saveTasks() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        } catch (error) {
+            alert("Unable to save tasks in this browser.");
+            console.error(error);
+        }
+        renderTasks();
+    }
+
+    function makeCell(value) {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        return cell;
+    }
+
+    function makeButton(label, className, callback) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = className;
+        button.textContent = label;
+        button.addEventListener("click", callback);
+        return button;
+    }
+
+    function renderTasks() {
+        const total = tasks.length;
+        const completed = tasks.filter(task => task.completed).length;
+        const pending = total - completed;
+
+        const totalHours = tasks.reduce(
+            (sum, task) => sum + Number(task.hours || 0), 0
+        );
+
+        const percent = total
+            ? Math.round((completed / total) * 100)
+            : 0;
+
+        document.getElementById("totalTasks").textContent = total;
+        document.getElementById("completedTasks").textContent = completed;
+        document.getElementById("pendingTasks").textContent = pending;
+        document.getElementById("plannedHours").textContent =
+            Number(totalHours.toFixed(2));
+
+        document.getElementById("completionRate").textContent =
+            percent + "%";
+
+        document.getElementById("progressFill").style.width =
+            percent + "%";
+
+        document.getElementById("taskCountBadge").textContent =
+            total + (total === 1 ? " task" : " tasks");
+
+        document.getElementById("progressMessage").textContent =
+            total === 0
+                ? "Add your first study task to start tracking your progress."
+                : completed + " of " + total + " tasks completed. Keep going!";
+
+        document.getElementById("studyUpdated").textContent =
+            "Last updated: " + new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+
+        const query = searchInput.value.trim().toLowerCase();
+        const filter = filterInput.value;
+
+        const filteredTasks = tasks.filter(task => {
+            const matchesSearch =
+                String(task.subject).toLowerCase().includes(query) ||
+                String(task.task).toLowerCase().includes(query) ||
+                String(task.notes || "").toLowerCase().includes(query);
+
+            let matchesFilter = true;
+
+            if (filter === "pending") {
+                matchesFilter = !task.completed;
+            } else if (filter === "completed") {
+                matchesFilter = task.completed;
+            } else if (["High", "Medium", "Low"].includes(filter)) {
+                matchesFilter = task.priority === filter;
+            }
+
+            return matchesSearch && matchesFilter;
+        }).sort((a, b) => a.date.localeCompare(b.date));
+
+        tableBody.replaceChildren();
+
+        if (filteredTasks.length === 0) {
+            const row = document.createElement("tr");
+            const cell = document.createElement("td");
+            cell.colSpan = 6;
+            cell.className = "empty-state";
+            cell.textContent = total
+                ? "No tasks match your search or filter."
+                : "No study plans yet. Add your first task!";
+            row.appendChild(cell);
+            tableBody.appendChild(row);
+            return;
+        }
+
+        filteredTasks.forEach(task => {
+            const row = document.createElement("tr");
+
+            if (task.completed) {
+                row.classList.add("completed-row");
+            }
+
+            row.appendChild(makeCell(task.date));
+
+            const detailsCell = document.createElement("td");
+
+            const subject = document.createElement("div");
+            subject.className = "task-name";
+            subject.textContent = task.subject;
+
+            const description = document.createElement("div");
+            description.className = "task-description";
+            description.textContent = task.task;
+
+            detailsCell.append(subject, description);
+
+            if (task.notes) {
+                const notes = document.createElement("div");
+                notes.className = "task-description";
+                notes.style.marginTop = "5px";
+                notes.textContent = task.notes;
+                detailsCell.appendChild(notes);
+            }
+
+            row.appendChild(detailsCell);
+            row.appendChild(makeCell(task.hours + " h"));
+
+            const priorityCell = document.createElement("td");
+            const priority = document.createElement("span");
+            priority.className = "priority priority-" +
+                String(task.priority).toLowerCase();
+            priority.textContent = task.priority;
+            priorityCell.appendChild(priority);
+            row.appendChild(priorityCell);
+
+            const statusCell = document.createElement("td");
+            const status = document.createElement("span");
+            status.className = "status " +
+                (task.completed ? "status-complete" : "status-pending");
+            status.textContent = task.completed ? "Completed" : "Pending";
+            statusCell.appendChild(status);
+            row.appendChild(statusCell);
+
+            const actionsCell = document.createElement("td");
+            const actions = document.createElement("div");
+            actions.className = "action-buttons";
+
+            actions.appendChild(makeButton(
+                task.completed ? "Undo" : "Complete",
+                "small-btn",
+                function () {
+                    tasks = tasks.map(item =>
+                        item.id === task.id
+                            ? { ...item, completed: !item.completed }
+                            : item
+                    );
+                    saveTasks();
+                }
+            ));
+
+            actions.appendChild(makeButton(
+                "Delete",
+                "small-btn delete",
+                function () {
+                    if (!confirm("Delete this study task?")) return;
+                    tasks = tasks.filter(item => item.id !== task.id);
+                    saveTasks();
+                }
+            ));
+
+            actionsCell.appendChild(actions);
+            row.appendChild(actionsCell);
+            tableBody.appendChild(row);
+        });
+    }
+
+    form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const subject = subjectInput.value.trim();
+        const taskName = taskInput.value.trim();
+        const hours = Number(hoursInput.value);
+
+        if (!subject || !taskName || !dateInput.value) {
+            alert("Please enter the date, subject, and task.");
+            return;
+        }
+
+        if (!Number.isFinite(hours) || hours < 0.25 || hours > 24) {
+            alert("Enter study hours between 0.25 and 24.");
+            return;
+        }
+
+        tasks.push({
+            id: Date.now().toString() +
+                Math.random().toString(36).slice(2),
+            date: dateInput.value,
+            subject: subject,
+            task: taskName,
+            hours: hours,
+            priority: priorityInput.value,
+            notes: notesInput.value.trim(),
+            completed: false
+        });
+
+        saveTasks();
+
+        form.reset();
+        dateInput.value = getLocalDate();
+        priorityInput.value = "Medium";
+        subjectInput.focus();
+    });
+
+    form.addEventListener("reset", function () {
+        setTimeout(function () {
+            dateInput.value = getLocalDate();
+            priorityInput.value = "Medium";
+        }, 0);
+    });
+
+    searchInput.addEventListener("input", renderTasks);
+    filterInput.addEventListener("change", renderTasks);
+
+    document.getElementById("clearAllTasks").addEventListener(
+        "click",
+        function () {
+            if (tasks.length === 0) {
+                alert("There are no study plans to clear.");
+                return;
+            }
+
+            if (!confirm("Are you sure you want to delete all study tasks?")) {
+                return;
+            }
+
+            tasks = [];
+            saveTasks();
+        }
+    );
+
+    dateInput.value = getLocalDate();
+    loadTasks();
+    renderTasks();
+})();
+</script>
+
+{% endblock %}
