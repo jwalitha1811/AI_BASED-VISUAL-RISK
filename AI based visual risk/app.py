@@ -37,7 +37,7 @@ except ImportError:
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 if GEMINI_AVAILABLE and GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+    gemini_model = genai.GenerativeModel('gemini-3.8-flash')
     print("Gemini initialized successfully.")
 else:
     gemini_model = None
@@ -1207,6 +1207,7 @@ def home():
 @login_required
 def settings():
     return render_template('settings.html')
+
 # ------------------------- Run the App -------------------------
 if __name__ == '__main__':
     with app.app_context():
