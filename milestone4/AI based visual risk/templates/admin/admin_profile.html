@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+  .admin-profile-view {
+    padding: 24px;
+    background: #f8f9fc;
+    color: #343a49;
+    font-family: Inter, Arial, sans-serif;
+  }
+
+  .admin-profile-view * { box-sizing: border-box; }
+
+  .admin-profile-grid {
+    width: min(930px, 100%);
+    margin: 0 auto;
+    padding: 24px 28px;
+    display: grid;
+    grid-template-columns: 286px minmax(0, 1fr);
+    gap: 18px;
+    border-radius: 24px;
+    background: #f0f2ff;
+  }
+
+  .admin-profile-card {
+    min-height: 454px;
+    padding: 24px;
+    border: 1px solid white;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .9);
+    box-shadow: 0 14px 35px rgba(61, 68, 104, .11);
+  }
+
+  .admin-profile-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .admin-profile-avatar {
+    width: 88px;
+    height: 88px;
+    display: grid;
+    place-items: center;
+    margin: 3px 0 16px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #6741a8, #9c4da5);
+    box-shadow: 0 9px 22px rgba(111, 76, 177, .34);
+    color: white;
+    font-size: 42px;
+    font-weight: 700;
+  }
+
+  .admin-profile-summary h1 { margin: 0; font-size: 21px; }
+
+  .admin-profile-badge {
+    margin: 8px 0 17px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: linear-gradient(110deg, #6973e9, #824ba9);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .admin-profile-actions { width: 100%; display: grid; gap: 7px; }
+
+  .admin-profile-actions button,
+  .admin-profile-actions a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 35px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .admin-profile-edit {
+    border: 0;
+    background: linear-gradient(100deg, #6279e9, #8541a7);
+    color: white;
+  }
+
+  .admin-profile-logout {
+    border: 1px solid #f1a0a5;
+    background: transparent;
+    color: #e6757e;
+  }
+
+  .admin-profile-details h2 { margin: 0 0 17px; font-size: 14px; }
+
+  .admin-profile-information { margin: 0; }
+
+  .admin-profile-information div {
+    min-height: 37px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 11px;
+  }
+
+  .admin-profile-information dt { color: #8b92a3; }
+
+  .admin-profile-information dd {
+    margin: 0;
+    color: #515666;
+    font-weight: 650;
+    text-align: right;
+  }
+
+  .admin-profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 26px;
+    text-align: center;
+  }
+
+  .admin-profile-stats div { display: grid; gap: 4px; }
+  .admin-profile-stats strong { color: #343a45; font-size: 16px; }
+  .admin-profile-stats span {
+    color: #8b92a0;
+    font-size: 9px;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 650px) {
+    .admin-profile-view { padding: 14px; }
+    .admin-profile-grid { grid-template-columns: 1fr; padding: 13px; }
+    .admin-profile-card { min-height: 0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if current_user.is_authenticated %}
+  {% set username = current_user.username|default('User', true) %}
+  {% set display_name = username %}
+  {% set role = 'Administrator' if current_user.is_admin else 'User' %}
+  {% set joined = current_user.created_at|default(none, true) %}
+
+  <section class="admin-profile-view">
+    <div class="admin-profile-grid">
+      <article class="admin-profile-card admin-profile-summary">
+        <div class="admin-profile-avatar">
+          {{ display_name[0]|upper if display_name else 'U' }}
+        </div>
+
+        <h1>{{ display_name }}</h1>
+        <span class="admin-profile-badge">{{ role }}</span>
+
+        <div class="admin-profile-actions">
+         <a class="admin-profile-edit"
+            href="{{ url_for('user_profile_edit') }}">✎ Edit Profile</a>
+
+        <a class="admin-profile-logout"
+            href="{{ url_for('logout') }}">⇥ Logout</a>
+        </div>
+      </article>
+
+      <article class="admin-profile-card admin-profile-details">
+        <h2>▣ Account Information</h2>
+
+        <dl class="admin-profile-information">
+          <div><dt>User ID</dt><dd>{{ current_user.id }}</dd></div>
+          <div><dt>Username</dt><dd>{{ username }}</dd></div>
+          <div><dt>Email</dt><dd>{{ current_user.email|default('—', true) }}</dd></div>
+          <div><dt>Age</dt><dd>{{ current_user.age|default('—', true) }}</dd></div>
+          <div><dt>Occupation</dt><dd>{{ current_user.occupation|default('—', true) }}</dd></div>
+          <div>
+            <dt>Savings</dt>
+            <dd>
+              {% if current_user.savings is defined and current_user.savings is not none %}
+                ₹{{ "%.2f"|format(current_user.savings|float) }}
+              {% else %}
+                —
+              {% endif %}
+            </dd>
+          </div>
+          <div>
+            <dt>Member Since</dt>
+            <dd>{{ joined.strftime('%b %d, %Y') if joined else '—' }}</dd>
+          </div>
+        </dl>
+
+        <div class="admin-profile-stats">
+          <div><strong>{{ users_count|default(0) }}</strong><span>Users</span></div>
+          <div><strong>{{ transactions_count|default(0) }}</strong><span>Transactions</span></div>
+          <div><strong>{{ goals_count|default(0) }}</strong><span>Goals</span></div>
+        </div>
+      </article>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}
