@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, abort, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import os
+import time
+from math import isfinite
 from dotenv import load_dotenv
 from collections import defaultdict
 
@@ -26,24 +28,94 @@ login_manager.login_view = 'login'
 def utility_processor():
     return dict(datetime=datetime)
 
-# ------------------------- Gemini AI Setup -------------------------
+# ------------------------- Gemini + Groq AI Setup -------------------------
 try:
-    import google.generativeai as genai
+    from google import genai
     GEMINI_AVAILABLE = True
 except ImportError:
+    genai = None
     GEMINI_AVAILABLE = False
-    print("Warning: google-generativeai not installed. Install with: pip install google-generativeai")
+    print("Warning: google-genai is not installed. Install with: pip install google-genai")
 
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-if GEMINI_AVAILABLE and GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    gemini_model = genai.GenerativeModel('gemini-3.8-flash')
-    print("Gemini initialized successfully.")
-else:
-    gemini_model = None
-    if not GEMINI_API_KEY:
-        print("Warning: GEMINI_API_KEY not set. Assistant will use rule-based responses.")
+try:
+    from groq import Groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    Groq = None
+    GROQ_AVAILABLE = False
+    print("Warning: Groq SDK is not installed. Install with: pip install groq")
 
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GEMINI_MODEL_NAME = "gemini-2.5-flash-lite"
+GROQ_MODEL_NAME = "openai/gpt-oss-20b"
+
+# Skip Gemini briefly after a failed request and use Groq as the fallback.
+GEMINI_RETRY_UNTIL = 0.0
+
+gemini_client = (
+    genai.Client(api_key=GEMINI_API_KEY)
+    if GEMINI_AVAILABLE and GEMINI_API_KEY
+    else None
+)
+groq_client = (
+    Groq(api_key=GROQ_API_KEY)
+    if GROQ_AVAILABLE and GROQ_API_KEY
+    else None
+)
+
+if gemini_client:
+    print(f"Gemini initialized successfully ({GEMINI_MODEL_NAME}).")
+elif not GEMINI_API_KEY:
+    print("Warning: GEMINI_API_KEY not set.")
+
+if groq_client:
+    print(f"Groq initialized successfully ({GROQ_MODEL_NAME}).")
+elif not GROQ_API_KEY:
+    print("Warning: GROQ_API_KEY not set.")
+
+def generate_ai_response(prompt):
+    """Try Gemini first, then fall back to Groq if Gemini fails or is cooling down."""
+    global GEMINI_RETRY_UNTIL
+
+    if gemini_client and time.monotonic() >= GEMINI_RETRY_UNTIL:
+        try:
+            gemini_result = gemini_client.models.generate_content(
+                model=GEMINI_MODEL_NAME,
+                contents=prompt,
+            )
+            answer = (gemini_result.text or "").strip()
+            if answer:
+                return answer
+            app.logger.warning("Gemini returned an empty response; trying Groq.")
+        except Exception as exc:
+            app.logger.warning("Gemini request failed; trying Groq: %s", exc)
+
+        # Avoid immediately repeating a request to a failing Gemini endpoint.
+        GEMINI_RETRY_UNTIL = time.monotonic() + 30
+
+    if groq_client:
+        try:
+            groq_result = groq_client.chat.completions.create(
+                model=GROQ_MODEL_NAME,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            answer = groq_result.choices[0].message.content or ""
+            answer = answer.strip()
+            if answer:
+                return answer
+            raise RuntimeError("Groq returned an empty response.")
+        except Exception as exc:
+            app.logger.exception("Groq request failed.")
+            raise RuntimeError("Both AI providers failed.") from exc
+
+    if not gemini_client:
+        raise RuntimeError(
+            "No AI provider is configured. Set GEMINI_API_KEY or GROQ_API_KEY."
+        )
+    raise RuntimeError(
+        "Gemini is temporarily unavailable and GROQ_API_KEY is not configured."
+    )
 # ------------------------- Database Models -------------------------
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -904,10 +976,9 @@ def user_assistant():
         - Active Goals: {', '.join(goals) if goals else 'None'}
         """
 
-        # --- Only Gemini – no fallback ---
-        if not gemini_model or not GEMINI_API_KEY:
-            flash('⚠️ Gemini is not configured. Please set GEMINI_API_KEY.')
-            return redirect(url_for('user_assistant'))
+        if not gemini_client and not groq_client:
+            flash("Configure GEMINI_API_KEY or GROQ_API_KEY to enable the assistant.")
+            return redirect(url_for("user_assistant"))
 
         try:
             prompt = f"""
@@ -916,13 +987,11 @@ def user_assistant():
             User question: {query}
             Provide actionable, concise, and encouraging advice.
             """
-            gemini_response = gemini_model.generate_content(prompt)
-            response = gemini_response.text.strip()
-        except Exception as e:
-            app.logger.error(f"Gemini error: {e}")
-            flash('⚠️ Gemini service is currently unavailable. Please try again later.')
-            return redirect(url_for('user_assistant'))
-
+            response = generate_ai_response(prompt)
+        except Exception:
+            app.logger.exception("All configured AI providers failed.")
+            flash("⚠️ AI services are currently unavailable. Please try again later.")
+            return redirect(url_for("user_assistant"))
         # Save to database
         chat_msg = ChatMessage(user_id=current_user.id, question=query, response=response)
         db.session.add(chat_msg)
@@ -1190,25 +1259,195 @@ def privacy():
 @app.route('/terms')
 def terms():
     return render_template('terms.html')
-# @app.route('/contact')
-# def contact():
-#     return render_template('contact.html')
-
-@app.route('/home')
-def home():
-    return render_template('home.html')
-# @app.route('/login')
-# def login():
-#     return render_template('login.html')
-# @app.route('/register')
-# def register():
-#     return render_template('register.html')
 @app.route('/settings')
 @login_required
 def settings():
     return render_template('settings.html')
 
-# ------------------------- Run the App -------------------------
+@app.route("/user/profile/edit", methods=["GET", "POST"])
+@login_required
+def user_profile_edit():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        occupation = request.form.get("occupation", "").strip()
+        age_text = request.form.get("age", "").strip()
+        savings_text = request.form.get("savings", "").strip()
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+        errors = []
+
+        if not username or len(username) > 80:
+            errors.append("Enter a username up to 80 characters long.")
+        elif User.query.filter(
+            User.username == username,
+            User.id != current_user.id,
+        ).first():
+            errors.append("That username is already in use.")
+
+        if not email or len(email) > 120 or "@" not in email:
+            errors.append("Enter a valid email address.")
+        elif User.query.filter(
+            User.email == email,
+            User.id != current_user.id,
+        ).first():
+            errors.append("That email address is already in use.")
+
+        if len(occupation) > 100:
+            errors.append("Occupation must be 100 characters or fewer.")
+
+        try:
+            age = int(age_text)
+            if not 1 <= age <= 120:
+                errors.append("Age must be between 1 and 120.")
+        except ValueError:
+            age = None
+            errors.append("Enter a valid age.")
+
+        try:
+            savings = float(savings_text)
+            if not isfinite(savings) or savings < 0:
+                errors.append("Savings must be a non-negative amount.")
+        except ValueError:
+            savings = None
+            errors.append("Enter a valid savings amount.")
+
+        if new_password:
+            if len(new_password) < 8:
+                errors.append("A new password must be at least 8 characters.")
+            if new_password != confirm_password:
+                errors.append("The new passwords do not match.")
+        elif confirm_password:
+            errors.append("Enter a new password or clear the confirmation field.")
+
+        if errors:
+            for error in errors:
+                flash(error, "danger")
+            return render_template("user/profile_edit.html", user=current_user)
+
+        current_user.username = username
+        current_user.email = email
+        current_user.age = age
+        current_user.occupation = occupation
+        current_user.savings = savings
+        if new_password:
+            current_user.set_password(new_password)
+
+        db.session.commit()
+        flash("Your profile has been updated.", "success")
+        destination = "admin_profile" if current_user.is_admin else "user_profile"
+        return redirect(url_for(destination))
+
+    return render_template("user/profile_edit.html", user=current_user)
+
+@app.route("/user/profile")
+@login_required
+def user_profile():
+    if current_user.is_admin:
+        return redirect(url_for("admin_profile"))
+
+    return render_template(
+        "user/profile.html",
+        user=current_user,
+        transactions_count=len(current_user.transactions),
+        goals_count=len(current_user.goals),
+        study_count=len(current_user.study_logs),
+    )
+
+@app.route("/admin/users/<int:user_id>/edit", methods=["GET", "POST"])
+@login_required
+def admin_edit(user_id):
+    if not current_user.is_admin:
+        abort(403)
+
+    user = User.query.get_or_404(user_id)
+
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip()
+        occupation = request.form.get("occupation", "").strip()
+        age_text = request.form.get("age", "").strip()
+        savings_text = request.form.get("savings", "").strip()
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+        errors = []
+
+        if not username or len(username) > 80:
+            errors.append("Enter a username up to 80 characters long.")
+        elif User.query.filter(
+            User.username == username,
+            User.id != user.id,
+        ).first():
+            errors.append("That username is already in use.")
+
+        if not email or len(email) > 120 or "@" not in email:
+            errors.append("Enter a valid email address.")
+        elif User.query.filter(
+            User.email == email,
+            User.id != user.id,
+        ).first():
+            errors.append("That email address is already in use.")
+
+        if len(occupation) > 100:
+            errors.append("Occupation must be 100 characters or fewer.")
+
+        try:
+            age = int(age_text)
+            if not 1 <= age <= 120:
+                errors.append("Age must be between 1 and 120.")
+        except ValueError:
+            age = None
+            errors.append("Enter a valid age.")
+
+        try:
+            savings = float(savings_text)
+            if not isfinite(savings) or savings < 0:
+                errors.append("Savings must be a non-negative amount.")
+        except ValueError:
+            savings = None
+            errors.append("Enter a valid savings amount.")
+
+        if new_password:
+            if len(new_password) < 8:
+                errors.append("A new password must be at least 8 characters.")
+            if new_password != confirm_password:
+                errors.append("The new passwords do not match.")
+        elif confirm_password:
+            errors.append("Enter a new password or clear the confirmation field.")
+
+        if errors:
+            for error in errors:
+                flash(error, "danger")
+            return render_template("admin/user_edit.html", user=user)
+
+        user.username = username
+        user.email = email
+        user.age = age
+        user.occupation = occupation
+        user.savings = savings
+        if new_password:
+            user.set_password(new_password)
+
+        db.session.commit()
+        flash(f"Updated {user.username}'s account.", "success")
+        return redirect(url_for("admin_user_detail", user_id=user.id))
+
+    return render_template("admin/user_edit.html", user=user)
+
+@app.route("/admin/profile")
+@login_required
+def admin_profile():
+    if not current_user.is_admin:
+        flash("Admin access required.")
+        return redirect(url_for("user_dashboard"))
+
+    return render_template(
+        "admin/admin_profile.html",
+        users_count=User.query.count(),
+        transactions_count=Transaction.query.count(),
+        goals_count=Goal.query.count(),
+    )
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

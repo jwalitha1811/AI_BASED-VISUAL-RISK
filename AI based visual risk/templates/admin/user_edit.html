@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+  .profile-edit-page {
+    min-height: calc(100vh - 64px);
+    padding: 28px 24px 48px;
+    background: linear-gradient(135deg, #f4f5ff 0%, #fbfaff 100%);
+    color: #343a49;
+  }
+
+  .profile-edit-wrap { max-width: 1360px; margin: 0 auto; }
+
+  .profile-edit-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .profile-edit-heading h1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 22px;
+    font-weight: 750;
+  }
+
+  .profile-edit-heading h1 i { color: #3279e8; }
+  .profile-edit-meta { display: flex; gap: 20px; color: #8b92a3; font-size: 11px; }
+  .profile-edit-meta span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .profile-edit-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, .48fr) minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .profile-edit-card {
+    border: 1px solid rgba(255,255,255,.94);
+    border-radius: 19px;
+    background: rgba(255,255,255,.93);
+    box-shadow: 0 12px 34px rgba(61,68,104,.10);
+  }
+
+  .profile-preview { min-height: 430px; padding: 27px 24px; }
+  .profile-preview-top { text-align: center; }
+
+  .profile-preview-avatar {
+    width: 72px;
+    height: 72px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 12px;
+    border: 3px solid white;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #6741a8, #9c4da5);
+    box-shadow: 0 8px 20px rgba(111,76,177,.3);
+    color: white;
+    font-size: 34px;
+    font-weight: 700;
+  }
+
+  .profile-preview-name { margin: 0; font-size: 17px; font-weight: 750; }
+  .profile-preview-email { margin-top: 5px; color: #8b92a3; font-size: 11px; overflow-wrap: anywhere; }
+  .profile-preview-list { display: grid; gap: 12px; margin: 35px 0 0; }
+  .profile-preview-row { display: flex; justify-content: space-between; gap: 14px; font-size: 11px; }
+  .profile-preview-row span { color: #8b92a3; }
+  .profile-preview-row strong { color: #454b5a; font-weight: 650; text-align: right; }
+  .profile-preview-note { margin: 39px 0 0; color: #9299a8; font-size: 11px; text-align: center; }
+
+  .profile-edit-form-card { padding: 23px 24px 20px; }
+  .profile-edit-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 19px;
+    font-size: 14px;
+    font-weight: 750;
+  }
+  .profile-edit-section-title i { color: #3279e8; }
+
+  .profile-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px 22px;
+  }
+
+  .profile-field { min-width: 0; }
+  .profile-field label { display: block; margin-bottom: 6px; color: #555c6b; font-size: 11px; font-weight: 650; }
+  .profile-field label .required { color: #e45c69; }
+  .profile-field input {
+    width: 100%;
+    min-height: 39px;
+    padding: 9px 11px;
+    border: 1px solid #e5e8f0;
+    border-radius: 9px;
+    outline: none;
+    background: #fff;
+    color: #404655;
+    font-size: 12px;
+  }
+  .profile-field input:focus { border-color: #7b83e5; box-shadow: 0 0 0 3px rgba(123,131,229,.12); }
+  .profile-field input[readonly] { background: #f7f8fb; color: #858c9a; }
+  .profile-field .input-icon { position: relative; }
+  .profile-field .input-icon i { position: absolute; top: 13px; left: 11px; color: #98a0ae; font-size: 12px; }
+  .profile-field .input-icon input { padding-left: 32px; }
+
+  .profile-password-section { margin-top: 24px; padding-top: 21px; border-top: 1px solid #edf0f5; }
+  .profile-password-note { margin: -7px 0 13px; color: #9299a8; font-size: 10px; }
+  .profile-edit-actions { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+  .profile-edit-save {
+    min-height: 38px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(100deg, #6279e9, #8541a7);
+    box-shadow: 0 5px 12px rgba(106,88,201,.2);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .profile-edit-cancel { color: #565d6b; font-size: 12px; text-decoration: none; }
+  .profile-edit-cancel:hover { color: #3d55c5; }
+
+  @media (max-width: 760px) {
+    .profile-edit-page { padding: 20px 14px 32px; }
+    .profile-edit-grid { grid-template-columns: 1fr; }
+    .profile-preview { min-height: 0; }
+    .profile-preview-list { max-width: 420px; margin: 25px auto 0; }
+    .profile-preview-note { margin-top: 24px; }
+  }
+  @media (max-width: 520px) {
+    .profile-edit-heading { align-items: flex-start; flex-direction: column; }
+    .profile-edit-meta { gap: 12px; }
+    .profile-edit-form-card { padding: 20px 16px; }
+    .profile-form-grid { grid-template-columns: 1fr; gap: 12px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="profile-edit-page">
+  <div class="profile-edit-wrap">
+    <header class="profile-edit-heading">
+      <h1><i class="fas fa-user-edit" aria-hidden="true"></i> Edit User</h1>
+      <div class="profile-edit-meta">
+        <span><i class="fas fa-hashtag" aria-hidden="true"></i> ID: {{ user.id }}</span>
+        <span><i class="fas fa-calendar-alt" aria-hidden="true"></i> {{ user.created_at.strftime('%b %d, %Y') }}</span>
+      </div>
+    </header>
+
+    <div class="profile-edit-grid">
+      <aside class="profile-edit-card profile-preview" aria-label="Live profile preview">
+        <div class="profile-preview-top">
+          <div class="profile-preview-avatar" id="previewAvatar">{{ (user.username or 'U')[0]|upper }}</div>
+          <h2 class="profile-preview-name" id="previewUsername">{{ request.form.get('username', user.username) }}</h2>
+          <div class="profile-preview-email" id="previewEmail">{{ request.form.get('email', user.email) }}</div>
+        </div>
+        <div class="profile-preview-list">
+          <div class="profile-preview-row"><span>Occupation</span><strong id="previewOccupation">{{ request.form.get('occupation', user.occupation or '—') }}</strong></div>
+          <div class="profile-preview-row"><span>Age</span><strong id="previewAge">{{ request.form.get('age', user.age) }}</strong></div>
+          <div class="profile-preview-row"><span>Savings</span><strong id="previewSavings">₹{{ '%.2f'|format(request.form.get('savings', user.savings)|float) }}</strong></div>
+        </div>
+        <p class="profile-preview-note"><i class="fas fa-info-circle" aria-hidden="true"></i> Changes are reflected live in this preview.</p>
+      </aside>
+
+      <section class="profile-edit-card profile-edit-form-card">
+        <form method="post" action="{{ url_for('admin_edit', user_id=user.id) }}">
+          <h2 class="profile-edit-section-title"><i class="fas fa-id-card" aria-hidden="true"></i> Basic Information</h2>
+          <div class="profile-form-grid">
+            <div class="profile-field">
+              <label for="editUsername">Username <span class="required">*</span></label>
+              <div class="input-icon"><i class="fas fa-user" aria-hidden="true"></i><input id="editUsername" name="username" type="text" maxlength="80" value="{{ request.form.get('username', user.username) }}" autocomplete="username" required></div>
+            </div>
+            <div class="profile-field">
+              <label for="editEmail">Email <span class="required">*</span></label>
+              <div class="input-icon"><i class="fas fa-envelope" aria-hidden="true"></i><input id="editEmail" name="email" type="email" maxlength="120" value="{{ request.form.get('email', user.email) }}" autocomplete="email" required></div>
+            </div>
+            <div class="profile-field">
+              <label for="editAge">Age <span class="required">*</span></label>
+              <div class="input-icon"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="editAge" name="age" type="number" min="1" max="120" value="{{ request.form.get('age', user.age) }}" required></div>
+            </div>
+            <div class="profile-field">
+              <label for="editOccupation">Occupation</label>
+              <div class="input-icon"><i class="fas fa-briefcase" aria-hidden="true"></i><input id="editOccupation" name="occupation" type="text" maxlength="100" value="{{ request.form.get('occupation', user.occupation or '') }}"></div>
+            </div>
+            <div class="profile-field">
+              <label for="editSavings">Savings (₹) <span class="required">*</span></label>
+              <div class="input-icon"><i class="fas fa-coins" aria-hidden="true"></i><input id="editSavings" name="savings" type="number" min="0" step="0.01" value="{{ request.form.get('savings', user.savings or 0) }}" required></div>
+            </div>
+            <div class="profile-field">
+              <label for="accountStatus">Account Status</label>
+              <div class="input-icon"><i class="fas fa-shield-alt" aria-hidden="true"></i><input id="accountStatus" type="text" value="Active" readonly></div>
+            </div>
+          </div>
+
+          <div class="profile-password-section">
+            <h2 class="profile-edit-section-title"><i class="fas fa-key" aria-hidden="true"></i> Optional</h2>
+            <p class="profile-password-note">Leave both password fields blank to keep your current password.</p>
+            <div class="profile-form-grid">
+              <div class="profile-field">
+                <label for="newPassword">New Password</label>
+                <div class="input-icon"><i class="fas fa-lock" aria-hidden="true"></i><input id="newPassword" name="new_password" type="password" minlength="8" autocomplete="new-password" placeholder="Leave blank to keep current"></div>
+              </div>
+              <div class="profile-field">
+                <label for="confirmPassword">Confirm New Password</label>
+                <div class="input-icon"><i class="fas fa-lock" aria-hidden="true"></i><input id="confirmPassword" name="confirm_password" type="password" minlength="8" autocomplete="new-password" placeholder="Re-enter new password"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-edit-actions">
+            <button class="profile-edit-save" type="submit"><i class="fas fa-save" aria-hidden="true"></i> Save Changes</button>
+            <a class="profile-edit-cancel" href="{{ url_for('admin_user_detail', user_id=user.id) }}"><i class="fas fa-times" aria-hidden="true"></i> Cancel</a>
+            <a class="profile-edit-cancel" style="margin-left:auto" href="{{ url_for('admin_users') }}"><i class="fas fa-arrow-left" aria-hidden="true"></i> Back to Users</a>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (() => {
+    const fields = {
+      username: document.getElementById("editUsername"),
+      email: document.getElementById("editEmail"),
+      age: document.getElementById("editAge"),
+      occupation: document.getElementById("editOccupation"),
+      savings: document.getElementById("editSavings")
+    };
+    const preview = {
+      avatar: document.getElementById("previewAvatar"),
+      username: document.getElementById("previewUsername"),
+      email: document.getElementById("previewEmail"),
+      age: document.getElementById("previewAge"),
+      occupation: document.getElementById("previewOccupation"),
+      savings: document.getElementById("previewSavings")
+    };
+    const updatePreview = () => {
+      const username = fields.username.value.trim() || "User";
+      const savings = Number(fields.savings.value);
+      preview.avatar.textContent = username.charAt(0).toUpperCase();
+      preview.username.textContent = username;
+      preview.email.textContent = fields.email.value || "—";
+      preview.age.textContent = fields.age.value || "—";
+      preview.occupation.textContent = fields.occupation.value || "—";
+      preview.savings.textContent = `₹${Number.isFinite(savings) ? savings.toFixed(2) : "0.00"}`;
+    };
+    Object.values(fields).forEach((field) => field.addEventListener("input", updatePreview));
+    updatePreview();
+  })();
+</script>
+{% endblock %}
+

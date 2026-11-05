@@ -380,7 +380,7 @@
                                     <li>
                                         <a
                                             class="dropdown-item"
-                                            href="{{ url_for('user_dashboard') }}"
+                                            href="{{ url_for('admin_profile') }}"
                                         >
                                             <i class="fas fa-user me-2"></i>
                                             My Profile
@@ -471,9 +471,19 @@
                                 <li>
                                     <a
                                         class="dropdown-item"
-                                        href="{{ url_for('user_dashboard') }}"
+                                        href="{{ url_for('admin_profile' if current_user.is_admin else 'user_profile') }}"
                                     >
                                         <i class="fas fa-user me-2"></i> Profile
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a
+                                        class="dropdown-item"
+                                        href="{{ url_for('user_profile_edit') }}"
+                                    >
+                                        <i class="fas fa-user-edit me-2"></i>
+                                        Edit Profile
                                     </a>
                                 </li>
 
